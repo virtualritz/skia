@@ -275,6 +275,39 @@ var CanvasKit = {
     _makeBlender: function() {},
   },
 
+  RuntimeEffectBuilder: {
+    // public API (from JS bindings)
+    getUniform: function() {},
+    setUniform: function() {},
+    setUniformFloat: function() {},
+    getChildShader: function() {},
+    getChildColorFilter: function() {},
+    getChildBlender: function() {},
+    setChildShader: function() {},
+    setChildColorFilter: function() {},
+    setChildBlender: function() {},
+    makeShader: function() {},
+    makeColorFilter: function() {},
+    makeBlender: function() {},
+  
+    // private API (from C++ bindings)
+    _getUniform: function() {},
+    _setUniform: function() {},
+    _setUniformFloat: function() {},
+    _getChildShader: function() {},
+    _getChildColorFilter: function() {},
+    _getChildBlender: function() {},
+    _setChildShader: function() {},
+    _setChildColorFilter: function() {},
+    _setChildBlender: function() {},
+    _makeShader: function() {},
+    _makeColorFilter: function() {},
+    _makeBlender: function() {},
+  
+    // Emscripten-generated
+    delete: function() {},
+  },
+
   ParagraphStyle: function() {},
 
   AnimatedImage: {
@@ -528,6 +561,8 @@ var CanvasKit = {
     MakeImage: function() {},
     MakeMatrixTransform: function() {},
     MakeOffset: function() {},
+    MakeRuntimeShader: function() {},
+    MakeShader: function() {},
 
     prototype: {
       getOutputBounds: function() {},

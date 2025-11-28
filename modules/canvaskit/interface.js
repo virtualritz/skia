@@ -627,7 +627,7 @@ CanvasKit.onRuntimeInitialized = function() {
     CanvasKit.setCurrentContext(this._context);
     copyRectToWasm(src,  _scratchFourFloatsAPtr);
     copyRectToWasm(dest, _scratchFourFloatsBPtr);
-    this._drawImageRect(img, _scratchFourFloatsAPtr, _scratchFourFloatsBPtr, paint, !!fastSample);
+    this._drawImageRect(img, _scratchFourFloatsAPtr, _scratchFourFloatsBPtr, paint || null, !!fastSample);
   };
 
   CanvasKit.Canvas.prototype.drawImageRectCubic = function(img, src, dest, B, C, paint) {

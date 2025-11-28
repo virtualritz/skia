@@ -459,6 +459,7 @@ export interface CanvasKit {
     readonly Paint: DefaultConstructor<Paint>;
     readonly Path: PathConstructorAndFactory;
     readonly PictureRecorder: DefaultConstructor<PictureRecorder>;
+    readonly RuntimeEffectBuilder: RuntimeEffectBuilderConstructor;
     readonly TextStyle: TextStyleConstructor;
     readonly SlottableTextProperty: SlottableTextPropertyConstructor;
 
@@ -1545,7 +1546,7 @@ export interface Canvas extends EmbindObject<"Canvas"> {
      * @param paint
      * @param fastSample - if false, will filter strictly within src.
      */
-    drawImageRect(img: Image, src: InputRect, dest: InputRect, paint: Paint,
+    drawImageRect(img: Image, src: InputRect, dest: InputRect, paint?: Paint,
                   fastSample?: boolean): void;
 
     /**
@@ -1559,7 +1560,7 @@ export interface Canvas extends EmbindObject<"Canvas"> {
      * @param paint
      */
     drawImageRectCubic(img: Image, src: InputRect, dest: InputRect,
-                       B: number, C: number, paint?: Paint | null): void;
+                       B: number, C: number, paint?: Paint): void;
 
     /**
      * Draws sub-rectangle src from provided image, scaled and translated to fill dst rectangle.
@@ -2966,6 +2967,108 @@ export interface RuntimeEffect extends EmbindObject<"RuntimeEffect"> {
      * @param index
      */
     getUniformName(index: number): string;
+
+}
+
+export interface RuntimeEffectBuilderConstructor {
+    /**
+     * Constructs a RuntimeEffectBuilder for the given RuntimeEffect.
+     * @param effect - The RuntimeEffect to build upon
+     */
+    new (effect: RuntimeEffect): RuntimeEffectBuilder;
+}
+
+/**
+ * RuntimeEffectBuilder provides a mutable interface for setting uniforms and child shaders/color filters/blenders
+ * on a RuntimeEffect before creating the final shader/color filter/blender.
+ */
+export interface RuntimeEffectBuilder extends EmbindObject<"RuntimeEffectBuilder"> {
+    /**
+     * Gets the current value of a uniform by name.
+     * @param name - The name of the uniform
+     * @returns The uniform values as an array of floats, or null if not found
+     */
+    getUniform(name: string): Float32Array | null;
+
+    /**
+     * Sets a uniform by name with an array of float values.
+     * @param name - The name of the uniform
+     * @param values - The float values to set
+     * @returns true if successful, false if uniform not found or size mismatch
+     */
+    setUniform(name: string, values: Float32Array | number[]): boolean;
+
+    /**
+     * Sets a single float uniform by name.
+     * @param name - The name of the uniform
+     * @param value - The float value to set
+     * @returns true if successful, false if uniform not found
+     */
+    setUniformFloat(name: string, value: number): boolean;
+
+    /**
+     * Gets a child shader by name.
+     * @param name - The name of the child shader
+     * @returns The shader, or null if not found
+     */
+    getChildShader(name: string): Shader | null;
+
+    /**
+     * Gets a child color filter by name.
+     * @param name - The name of the child color filter
+     * @returns The color filter, or null if not found
+     */
+    getChildColorFilter(name: string): ColorFilter | null;
+
+    /**
+     * Gets a child blender by name.
+     * @param name - The name of the child blender
+     * @returns The blender, or null if not found
+     */
+    getChildBlender(name: string): Blender | null;
+
+    /**
+     * Sets a child shader by name.
+     * @param name - The name of the child shader
+     * @param shader - The shader to set (can be null to clear)
+     * @returns true if successful, false if child not found
+     */
+    setChildShader(name: string, shader: Shader | null): boolean;
+
+    /**
+     * Sets a child color filter by name.
+     * @param name - The name of the child color filter
+     * @param colorFilter - The color filter to set (can be null to clear)
+     * @returns true if successful, false if child not found
+     */
+    setChildColorFilter(name: string, colorFilter: ColorFilter | null): boolean;
+
+    /**
+     * Sets a child blender by name.
+     * @param name - The name of the child blender
+     * @param blender - The blender to set (can be null to clear)
+     * @returns true if successful, false if child not found
+     */
+    setChildBlender(name: string, blender: Blender | null): boolean;
+
+    /**
+     * Creates a shader from the current state of the builder.
+     * @param localMatrix - Optional local matrix to apply
+     * @returns The created shader
+     */
+    makeShader(localMatrix?: InputMatrix): Shader;
+
+    /**
+     * Creates a color filter from the current state of the builder.
+     * @returns The created color filter
+     */
+    makeColorFilter(): ColorFilter;
+
+    /**
+     * Creates a blender from the current state of the builder.
+     * @returns The created blender
+     */
+    makeBlender(): Blender;
 }
 
 /**
@@ -3840,6 +3943,26 @@ export interface ImageFilterFactory {
      * @param shader - The Shader to be transformed
      */
    MakeShader(shader: Shader): ImageFilter;
+
+    /**
+     * Create a filter that fills the output with the per-pixel evaluation of the SkShader produced
+     * by the SkRuntimeEffectBuilder. The shader is defined in the image filter's local coordinate
+     * system, so it will automatically be affected by SkCanvas' transform.
+     *
+     * This variant assumes that the runtime shader samples 'childShaderName' with the same input
+     * coordinate passed to the shader.
+     *
+     * @param builder - The RuntimeEffectBuilder used to produce the runtime shader
+     * @param childShaderName - The name of the child shader defined in the builder that will be
+     *                          bound to the input param (or the source image if the input param
+     *                          is null). If empty, the builder can have exactly one child shader,
+     *                          which automatically binds the input param.
+     * @param input - The image filter that will be provided as input to the runtime shader.
+     *                If null the implicit source image is used instead
+     */
+    MakeRuntimeShader(builder: RuntimeEffectBuilder, childShaderName?: string,
+                      input?: ImageFilter | null): ImageFilter;
+
 }
 
 /**

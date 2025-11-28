@@ -67,4 +67,30 @@ CanvasKit._extraInitializations.push(function() {
     var fptr = copy1dArray(floats, 'HEAPF32');
     return this._makeBlender(fptr, floats.length * 4, shouldOwnUniforms);
   }
+
+  // RuntimeEffectBuilder JavaScript wrappers
+  CanvasKit.RuntimeEffectBuilder.prototype.getUniform = function(name) {
+    var scratchPtr = _scratchFourFloatsAPtr; // Use existing scratch buffer
+    if (this._getUniform(name, scratchPtr)) {
+      // Copy the data from the scratch buffer
+      var result = new Float32Array(CanvasKit.HEAPF32.buffer, scratchPtr, 4);
+      return Array.from(result);
+    }
+    return null;
+  };
+
+  CanvasKit.RuntimeEffectBuilder.prototype.setUniform = function(name, floats) {
+    if (!floats || floats.length === 0) {
+      return false;
+    }
+    var fptr = copy1dArray(floats, 'HEAPF32');
+    var result = this._setUniform(name, fptr, floats.length);
+    freeArraysThatAreNotMallocedByUsers(fptr, floats);
+    return result;
+  };
+
+  CanvasKit.RuntimeEffectBuilder.prototype.makeShader = function(localMatrix) {
+    var localMatrixPtr = copy3x3MatrixToWasm(localMatrix);
+    return this._makeShader(localMatrixPtr); // Pass null if localMatrix is undefined
+  };
 });
