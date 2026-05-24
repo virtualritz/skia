@@ -481,6 +481,7 @@ export interface CanvasKit {
     readonly MaskFilter: MaskFilterFactory;
     readonly PathEffect: PathEffectFactory;
     readonly RuntimeEffect: RuntimeEffectFactory;
+    readonly RuntimeEffectBuilder: RuntimeEffectBuilderConstructor;
     readonly Shader: ShaderFactory;
     readonly TextBlob: TextBlobFactory;
     readonly Typeface: TypefaceFactory;
@@ -3003,6 +3004,62 @@ export interface RuntimeEffect extends EmbindObject<"RuntimeEffect"> {
      * @param index
      */
     getUniformName(index: number): string;
+}
+
+/**
+ * Construct a typed builder for a RuntimeEffect's uniforms and children.
+ * The builder validates uniform names + arity, and lets callers set children
+ * (`shader` / `colorFilter` / `blender`) by name. Useful when the SkSL has many
+ * uniforms or non-shader children, or when the caller doesn't want to track
+ * the flat uniform order required by `makeShader`.
+ *
+ * See SkRuntimeEffect.h ("SkRuntimeEffectBuilder") for the underlying C++ API.
+ */
+export interface RuntimeEffectBuilder extends EmbindObject<"RuntimeEffectBuilder"> {
+    /**
+     * Assigns a uniform by name. The value's element count must match the SkSL
+     * declaration (a `float3` needs 3 floats, a `mat3` needs 9 floats, etc.).
+     * Returns `true` if the assignment succeeded, `false` if the name is
+     * unknown or the arity mismatches (a debug log line is emitted on mismatch).
+     */
+    setUniform(name: string, value: number | number[] | Float32Array): boolean;
+
+    /**
+     * Assigns a `shader` child by name. Returns `false` if the name is unknown.
+     */
+    setChildShader(name: string, shader: Shader): boolean;
+
+    /**
+     * Assigns a `colorFilter` child by name. Returns `false` if the name is unknown.
+     */
+    setChildColorFilter(name: string, colorFilter: ColorFilter): boolean;
+
+    /**
+     * Assigns a `blender` child by name. Returns `false` if the name is unknown.
+     */
+    setChildBlender(name: string, blender: Blender): boolean;
+
+    /**
+     * Builds a Shader from the current uniform + child state. Returns `null`
+     * if the effect's `main` signature isn't shader-compatible.
+     */
+    makeShader(localMatrix?: InputMatrix): Shader | null;
+
+    /**
+     * Builds a ColorFilter. Returns `null` if the effect samples a child shader
+     * or otherwise isn't usable as a color filter.
+     */
+    makeColorFilter(): ColorFilter | null;
+
+    /**
+     * Builds a Blender. Returns `null` if the effect's signature isn't
+     * blender-compatible.
+     */
+    makeBlender(): Blender | null;
+}
+
+export interface RuntimeEffectBuilderConstructor {
+    new (effect: RuntimeEffect): RuntimeEffectBuilder;
 }
 
 /**

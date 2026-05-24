@@ -275,6 +275,20 @@ var CanvasKit = {
     _makeBlender: function() {},
   },
 
+  RuntimeEffectBuilder: {
+    prototype: {
+      setUniform: function() {},
+      setChildShader: function() {},
+      setChildColorFilter: function() {},
+      setChildBlender: function() {},
+      makeShader: function() {},
+      makeColorFilter: function() {},
+      makeBlender: function() {},
+    },
+    _setUniform: function() {},
+    _makeShader: function() {},
+  },
+
   ParagraphStyle: function() {},
 
   AnimatedImage: {

@@ -67,4 +67,32 @@ CanvasKit._extraInitializations.push(function() {
     var fptr = copy1dArray(floats, 'HEAPF32');
     return this._makeBlender(fptr, floats.length * 4, shouldOwnUniforms);
   }
+
+  // RuntimeEffectBuilder wraps the C++ SkRuntimeEffectBuilder with ergonomic
+  // setters that accept a name + JS value (number, number[], or Float32Array).
+  // Construct via `new CanvasKit.RuntimeEffectBuilder(effect)` (the underlying
+  // C++ constructor is bound).
+
+  CanvasKit.RuntimeEffectBuilder.prototype.setUniform = function(name, value) {
+    var floats;
+    if (typeof value === 'number') {
+      floats = [value];
+    } else if (value instanceof Float32Array) {
+      floats = value;
+    } else if (Array.isArray(value)) {
+      floats = value;
+    } else {
+      Debug('setUniform: unsupported value type for ' + name);
+      return false;
+    }
+    var fptr = copy1dArray(floats, 'HEAPF32');
+    var ok = this._setUniform(name, fptr, floats.length);
+    CanvasKit._free(fptr);
+    return ok;
+  };
+
+  CanvasKit.RuntimeEffectBuilder.prototype.makeShader = function(localMatrix) {
+    var lmPtr = copy3x3MatrixToWasm(localMatrix);
+    return this._makeShader(lmPtr);
+  };
 });
