@@ -1138,6 +1138,31 @@ var CanvasKit = {
     TriangleFan: {},
   },
 
+  GradientInterpolationColorSpace: {
+    Destination: {},
+    SRGBLinear: {},
+    Lab: {},
+    OKLab: {},
+    OKLabGamutMap: {},
+    LCH: {},
+    OKLCH: {},
+    OKLCHGamutMap: {},
+    SRGB: {},
+    HSL: {},
+    HWB: {},
+    DisplayP3: {},
+    Rec2020: {},
+    ProphotoRGB: {},
+    A98RGB: {},
+  },
+
+  GradientInterpolationHueMethod: {
+    Shorter: {},
+    Longer: {},
+    Increasing: {},
+    Decreasing: {},
+  },
+
   InputState: {
     Up: {},
     Down: {},

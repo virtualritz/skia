@@ -515,6 +515,8 @@ export interface CanvasKit {
     readonly StrokeJoin: StrokeJoinEnumValues;
     readonly TileMode: TileModeEnumValues;
     readonly VertexMode: VertexModeEnumValues;
+    readonly GradientInterpolationColorSpace: GradientInterpolationColorSpaceEnumValues;
+    readonly GradientInterpolationHueMethod: GradientInterpolationHueMethodEnumValues;
     readonly InputState: InputStateEnumValues;
     readonly ModifierKey: ModifierKeyEnumValues;
 
@@ -4122,7 +4124,9 @@ export interface ShaderFactory {
      */
     MakeLinearGradient(start: InputPoint, end: InputPoint, colors: InputFlexibleColorArray,
                        pos: number[] | null, mode: TileMode, localMatrix?: InputMatrix,
-                       flags?: number, colorSpace?: ColorSpace): Shader;
+                       flags?: number, colorSpace?: ColorSpace,
+                       interpolationColorSpace?: GradientInterpolationColorSpace,
+                       hueMethod?: GradientInterpolationHueMethod): Shader;
 
     /**
      * Returns a shader that generates a radial gradient given the center and radius.
@@ -4139,7 +4143,9 @@ export interface ShaderFactory {
      */
     MakeRadialGradient(center: InputPoint, radius: number, colors: InputFlexibleColorArray,
                        pos: number[] | null, mode: TileMode, localMatrix?: InputMatrix,
-                       flags?: number, colorSpace?: ColorSpace): Shader;
+                       flags?: number, colorSpace?: ColorSpace,
+                       interpolationColorSpace?: GradientInterpolationColorSpace,
+                       hueMethod?: GradientInterpolationHueMethod): Shader;
 
     /**
      * Returns a shader that generates a sweep gradient given a center.
@@ -4159,7 +4165,9 @@ export interface ShaderFactory {
     MakeSweepGradient(cx: number, cy: number, colors: InputFlexibleColorArray,
                       pos: number[] | null, mode: TileMode, localMatrix?: InputMatrix | null,
                       flags?: number, startAngle?: AngleInDegrees, endAngle?: AngleInDegrees,
-                      colorSpace?: ColorSpace): Shader;
+                      colorSpace?: ColorSpace,
+                      interpolationColorSpace?: GradientInterpolationColorSpace,
+                      hueMethod?: GradientInterpolationHueMethod): Shader;
 
     /**
      * Returns a shader with Perlin Turbulence.
@@ -4193,7 +4201,9 @@ export interface ShaderFactory {
     MakeTwoPointConicalGradient(start: InputPoint, startRadius: number, end: InputPoint,
                                 endRadius: number, colors: InputFlexibleColorArray,
                                 pos: number[] | null, mode: TileMode, localMatrix?: InputMatrix,
-                                flags?: number, colorSpace?: ColorSpace): Shader;
+                                flags?: number, colorSpace?: ColorSpace,
+                                interpolationColorSpace?: GradientInterpolationColorSpace,
+                                hueMethod?: GradientInterpolationHueMethod): Shader;
 }
 
 /**
@@ -4596,6 +4606,8 @@ export type StrokeCap = EmbindEnumEntity;
 export type StrokeJoin = EmbindEnumEntity;
 export type TileMode = EmbindEnumEntity;
 export type VertexMode = EmbindEnumEntity;
+export type GradientInterpolationColorSpace = EmbindEnumEntity;
+export type GradientInterpolationHueMethod = EmbindEnumEntity;
 export type InputState = EmbindEnumEntity;
 export type ModifierKey = EmbindEnumEntity;
 
@@ -4902,6 +4914,31 @@ export interface VertexModeEnumValues extends EmbindEnum {
     Triangles: VertexMode;
     TrianglesStrip: VertexMode;
     TriangleFan: VertexMode;
+}
+
+export interface GradientInterpolationColorSpaceEnumValues extends EmbindEnum {
+    Destination: GradientInterpolationColorSpace;
+    SRGBLinear: GradientInterpolationColorSpace;
+    Lab: GradientInterpolationColorSpace;
+    OKLab: GradientInterpolationColorSpace;
+    OKLabGamutMap: GradientInterpolationColorSpace;
+    LCH: GradientInterpolationColorSpace;
+    OKLCH: GradientInterpolationColorSpace;
+    OKLCHGamutMap: GradientInterpolationColorSpace;
+    SRGB: GradientInterpolationColorSpace;
+    HSL: GradientInterpolationColorSpace;
+    HWB: GradientInterpolationColorSpace;
+    DisplayP3: GradientInterpolationColorSpace;
+    Rec2020: GradientInterpolationColorSpace;
+    ProphotoRGB: GradientInterpolationColorSpace;
+    A98RGB: GradientInterpolationColorSpace;
+}
+
+export interface GradientInterpolationHueMethodEnumValues extends EmbindEnum {
+    Shorter: GradientInterpolationHueMethod;
+    Longer: GradientInterpolationHueMethod;
+    Increasing: GradientInterpolationHueMethod;
+    Decreasing: GradientInterpolationHueMethod;
 }
 
 export interface InputStateEnumValues extends EmbindEnum {
