@@ -829,11 +829,13 @@ var CanvasKit = {
   Typeface: {
     GetDefault: function() {},
     MakeTypefaceFromData: function() {},
+    MakeFreeTypeFaceFromData: function() {},
     prototype: {
       getGlyphIDs: function() {},
       getFamilyName: function() {},
     },
     _MakeTypefaceFromData: function() {},
+    _MakeTypefaceFromDataWithAxes: function() {},
     _getGlyphIDs: function() {},
   },
 

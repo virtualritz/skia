@@ -4293,11 +4293,18 @@ export interface TypefaceFactory {
     /**
      * Create a typeface using Freetype from the specified bytes and return it. CanvasKit supports
      * .ttf, .woff and .woff2 fonts. It returns null if the bytes cannot be decoded.
+     *
+     * If `axes` is provided, it specifies a variable-font instance: a map of 4-character
+     * OpenType axis tags to numeric values (e.g. `{ wght: 700, wdth: 50, opsz: 28, slnt: -10 }`,
+     * or any font-specific custom tag). Axes whose tags aren't exactly four characters are
+     * silently skipped. Tags not advertised by the font itself are ignored by FreeType.
+     *
      * @param fontData
+     * @param axes - Optional variable-font axis values keyed by 4-char OpenType tag.
      */
-    MakeTypefaceFromData(fontData: ArrayBuffer): Typeface | null;
+    MakeTypefaceFromData(fontData: ArrayBuffer, axes?: FontAxisValues): Typeface | null;
     // Legacy
-    MakeFreeTypeFaceFromData(fontData: ArrayBuffer): Typeface | null;
+    MakeFreeTypeFaceFromData(fontData: ArrayBuffer, axes?: FontAxisValues): Typeface | null;
 }
 
 export interface TypefaceFontProviderFactory {
@@ -4584,6 +4591,14 @@ export type InputLineBreaks = MallocObj | Uint32Array | number[];
  * Not listed, but also supported are https://developer.mozilla.org/en-US/docs/Web/API/VideoFrame
  */
 export type TextureSource = TypedArray | HTMLImageElement | HTMLVideoElement | ImageData | ImageBitmap;
+
+/**
+ * Map of 4-character OpenType axis tags to numeric values, for selecting a
+ * specific instance of a variable font at load time. Common tags include
+ * `wght` (weight), `wdth` (width), `opsz` (optical size), `slnt` (slant).
+ * Fonts may also expose custom 4-char tags.
+ */
+export type FontAxisValues = Record<string, number>;
 
 export type AlphaType = EmbindEnumEntity;
 export type BlendMode = EmbindEnumEntity;
