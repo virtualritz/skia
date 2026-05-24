@@ -1781,7 +1781,16 @@ EMSCRIPTEN_BINDINGS(Skia) {
                                 return SkColorFilters::Matrix(twentyFloats);
                             }))
             .class_function("MakeSRGBToLinearGamma", &SkColorFilters::SRGBToLinearGamma)
-            .class_function("MakeLuma", &SkLumaColorFilter::Make);
+            .class_function("MakeLuma", &SkLumaColorFilter::Make)
+            .function("makeWithWorkingColorSpace",
+                      optional_override([](SkColorFilter& self,
+                                           sk_sp<SkColorSpace> workingCS) -> sk_sp<SkColorFilter> {
+                          // See `Shader.makeWithWorkingColorSpace` -- same mechanism for
+                          // wrapping a color filter to operate in a chosen working color
+                          // space rather than the destination surface's.
+                          return self.makeWithWorkingColorSpace(std::move(workingCS));
+                      }),
+                      allow_raw_pointers());
 
     class_<SkContourMeasureIter>("ContourMeasureIter")
             .constructor<const SkPath&, bool, float>()
@@ -2722,7 +2731,18 @@ EMSCRIPTEN_BINDINGS(Skia) {
                                 startAndEnd[1], endRadius,
                                 bu.grad(), bu.lm());
                     }),
-                    allow_raw_pointers());
+                    allow_raw_pointers())
+            .function("makeWithWorkingColorSpace",
+                      optional_override([](SkShader& self,
+                                           sk_sp<SkColorSpace> workingCS) -> sk_sp<SkShader> {
+                          // Wraps `self` so subsequent SkSL / blend computations run in
+                          // `workingCS` (typically a linear color space) rather than the
+                          // destination surface's color space. Useful for getting
+                          // cleaner gradient + filter math under wide-gamut surfaces.
+                          // Passing null restores the destination's color space.
+                          return self.makeWithWorkingColorSpace(std::move(workingCS));
+                      }),
+                      allow_raw_pointers());
 
 #if defined(CK_INCLUDE_RUNTIME_EFFECT)
     class_<SkSL::DebugTrace>("DebugTrace")
