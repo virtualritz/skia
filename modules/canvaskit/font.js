@@ -142,11 +142,39 @@ CanvasKit._extraInitializations.push(function() {
     return fm;
   };
 
-  CanvasKit.Typeface.MakeTypefaceFromData = function(fontData) {
+  CanvasKit.Typeface.MakeTypefaceFromData = function(fontData, axes) {
     var data = new Uint8Array(fontData);
 
     var fptr = copy1dArray(data, 'HEAPU8');
-    var font = CanvasKit.Typeface._MakeTypefaceFromData(fptr, data.byteLength);
+    var font;
+    if (axes) {
+      // axes is a Record<string, number> where the key is a 4-char OpenType
+      // axis tag (e.g. "wght", "wdth", "opsz", "slnt", or a custom 4-char tag).
+      // We pack each tag as a uint32 big-endian -- 'w','g','h','t' -> 0x77676874.
+      var tags = [];
+      var values = [];
+      for (var k in axes) {
+        if (k.length !== 4) {
+          Debug('skipping non-4-char axis tag: ' + k);
+          continue;
+        }
+        var tag = (k.charCodeAt(0) << 24) |
+                  (k.charCodeAt(1) << 16) |
+                  (k.charCodeAt(2) <<  8) |
+                   k.charCodeAt(3);
+        // JS bit-ops produce signed int32; convert to unsigned 32-bit.
+        tags.push(tag >>> 0);
+        values.push(+axes[k]);
+      }
+      var tagsPtr   = copy1dArray(new Uint32Array(tags),  'HEAPU32');
+      var valuesPtr = copy1dArray(new Float32Array(values), 'HEAPF32');
+      font = CanvasKit.Typeface._MakeTypefaceFromDataWithAxes(
+          fptr, data.byteLength, tagsPtr, valuesPtr, tags.length);
+      CanvasKit._free(tagsPtr);
+      CanvasKit._free(valuesPtr);
+    } else {
+      font = CanvasKit.Typeface._MakeTypefaceFromData(fptr, data.byteLength);
+    }
     if (!font) {
       Debug('Could not decode font data');
       // We do not need to free the data since the C++ will do that for us

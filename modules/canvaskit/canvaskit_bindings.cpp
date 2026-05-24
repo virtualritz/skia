@@ -3053,6 +3053,33 @@ EMSCRIPTEN_BINDINGS(Skia) {
                                                                    SkFontArguments());
                     }),
                     allow_raw_pointers())
+            .class_function(
+                    "_MakeTypefaceFromDataWithAxes",
+                    optional_override([](WASMPointerU8 fPtr,
+                                         int flen,
+                                         WASMPointerU32 axesTagsPtr,
+                                         WASMPointerF32 axesValuesPtr,
+                                         int axesCount) -> sk_sp<SkTypeface> {
+                        uint8_t* font = reinterpret_cast<uint8_t*>(fPtr);
+                        std::unique_ptr<SkMemoryStream> stream(new SkMemoryStream());
+                        stream->setMemoryOwned(font, flen);
+
+                        SkFontArguments args;
+                        std::vector<SkFontArguments::VariationPosition::Coordinate> coords;
+                        if (axesCount > 0 && axesTagsPtr && axesValuesPtr) {
+                            const uint32_t* tags = reinterpret_cast<const uint32_t*>(axesTagsPtr);
+                            const float* values = reinterpret_cast<const float*>(axesValuesPtr);
+                            coords.reserve(axesCount);
+                            for (int i = 0; i < axesCount; ++i) {
+                                coords.push_back({tags[i], values[i]});
+                            }
+                            SkFontArguments::VariationPosition pos = {
+                                coords.data(), static_cast<int>(coords.size())};
+                            args.setVariationDesignPosition(pos);
+                        }
+                        return SkTypeface_FreeType::MakeFromStream(std::move(stream), args);
+                    }),
+                    allow_raw_pointers())
             .function("getFamilyName", optional_override([](SkTypeface& self) -> JSString {
                           SkString s;
                           self.getFamilyName(&s);
