@@ -2360,6 +2360,48 @@ EMSCRIPTEN_BINDINGS(Skia) {
             .class_function("_MakeAdobeRGB", optional_override([]() -> sk_sp<SkColorSpace> {
                                 return SkColorSpace::MakeRGB(SkNamedTransferFn::k2Dot2,
                                                              SkNamedGamut::kAdobeRGB);
+                            }))
+            .class_function("_MakeSRGBLinear",
+                            optional_override([]() -> sk_sp<SkColorSpace> {
+                                return SkColorSpace::MakeSRGBLinear();
+                            }))
+            .class_function("_MakeDisplayP3Linear",
+                            optional_override([]() -> sk_sp<SkColorSpace> {
+                                return SkColorSpace::MakeRGB(SkNamedTransferFn::kLinear,
+                                                             SkNamedGamut::kDisplayP3);
+                            }))
+            .class_function("_MakeRec2020", optional_override([]() -> sk_sp<SkColorSpace> {
+                                return SkColorSpace::MakeRGB(SkNamedTransferFn::kRec2020,
+                                                             SkNamedGamut::kRec2020);
+                            }))
+            .class_function("_MakeRec2020Linear",
+                            optional_override([]() -> sk_sp<SkColorSpace> {
+                                return SkColorSpace::MakeRGB(SkNamedTransferFn::kLinear,
+                                                             SkNamedGamut::kRec2020);
+                            }))
+            .class_function("_MakeRec2020HLG",
+                            optional_override([]() -> sk_sp<SkColorSpace> {
+                                return SkColorSpace::MakeRGB(SkNamedTransferFn::kHLG,
+                                                             SkNamedGamut::kRec2020);
+                            }))
+            .class_function("_MakeRec2020PQ",
+                            optional_override([]() -> sk_sp<SkColorSpace> {
+                                return SkColorSpace::MakeRGB(SkNamedTransferFn::kPQ,
+                                                             SkNamedGamut::kRec2020);
+                            }))
+            .class_function("_MakeProphotoRGB",
+                            optional_override([]() -> sk_sp<SkColorSpace> {
+                                skcms_Matrix3x3 toXYZ;
+                                if (!SkNamedPrimaries::kProPhotoRGB.toXYZD50(&toXYZ)) {
+                                    return nullptr;
+                                }
+                                return SkColorSpace::MakeRGB(SkNamedTransferFn::kProPhotoRGB,
+                                                             toXYZ);
+                            }))
+            .class_function("_MakeA98RGB", optional_override([]() -> sk_sp<SkColorSpace> {
+                                // A98 RGB and Adobe RGB share the same gamut + transfer fn.
+                                return SkColorSpace::MakeRGB(SkNamedTransferFn::k2Dot2,
+                                                             SkNamedGamut::kAdobeRGB);
                             }));
 
     class_<SkPathEffect>("PathEffect")

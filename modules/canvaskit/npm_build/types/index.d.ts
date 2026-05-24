@@ -4831,6 +4831,17 @@ export interface ColorSpaceEnumValues { // not a typical enum, but effectively l
     readonly SRGB: ColorSpace;
     readonly DISPLAY_P3: ColorSpace;
     readonly ADOBE_RGB: ColorSpace;
+    readonly SRGB_LINEAR: ColorSpace;
+    readonly DISPLAY_P3_LINEAR: ColorSpace;
+    readonly REC2020: ColorSpace;
+    readonly REC2020_LINEAR: ColorSpace;
+    /** Rec.2020 primaries with the HLG (BT.2100) transfer function. */
+    readonly REC2020_HLG: ColorSpace;
+    /** Rec.2020 primaries with the PQ (BT.2100, HDR10) transfer function. */
+    readonly REC2020_PQ: ColorSpace;
+    readonly PROPHOTO_RGB: ColorSpace;
+    /** A98 RGB == Adobe RGB; provided under both names for symmetry with CSS Color 4. */
+    readonly A98_RGB: ColorSpace;
 
     /**
      * Returns true if the two color spaces are equal.

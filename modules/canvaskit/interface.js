@@ -43,6 +43,14 @@ CanvasKit.onRuntimeInitialized = function() {
   CanvasKit.ColorSpace.SRGB = CanvasKit.ColorSpace._MakeSRGB();
   CanvasKit.ColorSpace.DISPLAY_P3 = CanvasKit.ColorSpace._MakeDisplayP3();
   CanvasKit.ColorSpace.ADOBE_RGB = CanvasKit.ColorSpace._MakeAdobeRGB();
+  CanvasKit.ColorSpace.SRGB_LINEAR = CanvasKit.ColorSpace._MakeSRGBLinear();
+  CanvasKit.ColorSpace.DISPLAY_P3_LINEAR = CanvasKit.ColorSpace._MakeDisplayP3Linear();
+  CanvasKit.ColorSpace.REC2020 = CanvasKit.ColorSpace._MakeRec2020();
+  CanvasKit.ColorSpace.REC2020_LINEAR = CanvasKit.ColorSpace._MakeRec2020Linear();
+  CanvasKit.ColorSpace.REC2020_HLG = CanvasKit.ColorSpace._MakeRec2020HLG();
+  CanvasKit.ColorSpace.REC2020_PQ = CanvasKit.ColorSpace._MakeRec2020PQ();
+  CanvasKit.ColorSpace.PROPHOTO_RGB = CanvasKit.ColorSpace._MakeProphotoRGB();
+  CanvasKit.ColorSpace.A98_RGB = CanvasKit.ColorSpace._MakeA98RGB();
 
   // Use quotes to tell closure compiler not to minify the names
   CanvasKit['GlyphRunFlags'] = {
