@@ -1079,7 +1079,9 @@ struct GradientBuilder {
                     SkTileMode mode,
                     uint32_t legacyGradFlags,
                     WASMPointerF32 mPtr,
-                    sk_sp<SkColorSpace> colorSpace) : fLocalMatrix(mPtr)
+                    sk_sp<SkColorSpace> colorSpace,
+                    int interpolationColorSpaceIdx = 0,
+                    int hueMethodIdx = 0) : fLocalMatrix(mPtr)
     {
         SkASSERT(supported_for_gradients(colorType));
 
@@ -1105,8 +1107,25 @@ struct GradientBuilder {
         auto premul = (legacyGradFlags & 1) ? SkGradient::Interpolation::InPremul::kYes
                                             : SkGradient::Interpolation::InPremul::kNo;
 
+        if (interpolationColorSpaceIdx < 0 ||
+            interpolationColorSpaceIdx >= SkGradient::Interpolation::kColorSpaceCount) {
+            SkDebugf("interpolationColorSpaceIdx %d out of range; using kDestination\n",
+                     interpolationColorSpaceIdx);
+            interpolationColorSpaceIdx = 0;
+        }
+        if (hueMethodIdx < 0 ||
+            hueMethodIdx >= SkGradient::Interpolation::kHueMethodCount) {
+            SkDebugf("hueMethodIdx %d out of range; using kShorter\n", hueMethodIdx);
+            hueMethodIdx = 0;
+        }
+        SkGradient::Interpolation interp{
+            premul,
+            static_cast<SkGradient::Interpolation::ColorSpace>(interpolationColorSpaceIdx),
+            static_cast<SkGradient::Interpolation::HueMethod>(hueMethodIdx),
+        };
+
         fLM = mPtr ? &fLocalMatrix : nullptr;
-        fGrad = {{{colors, count}, pos, mode, std::move(colorSpace)}, {premul}};
+        fGrad = {{{colors, count}, pos, mode, std::move(colorSpace)}, interp};
     }
 
     const SkGradient& grad() const { return fGrad; }
@@ -2594,14 +2613,17 @@ EMSCRIPTEN_BINDINGS(Skia) {
                                          SkTileMode mode,
                                          uint32_t flags,
                                          WASMPointerF32 mPtr,
-                                         sk_sp<SkColorSpace> colorSpace) -> sk_sp<SkShader> {
+                                         sk_sp<SkColorSpace> colorSpace,
+                                         int interpolationColorSpaceIdx,
+                                         int hueMethodIdx) -> sk_sp<SkShader> {
                         if (!supported_for_gradients(colorType)) {
                             SkDebugf("%d is not an accepted colorType\n", colorType);
                             return nullptr;
                         }
                         const SkPoint* points = reinterpret_cast<const SkPoint*>(fourFloatsPtr);
                         GradientBuilder bu(cPtr, colorType, pPtr, count, mode,
-                                           flags, mPtr, std::move(colorSpace));
+                                           flags, mPtr, std::move(colorSpace),
+                                           interpolationColorSpaceIdx, hueMethodIdx);
                         return SkShaders::LinearGradient(points, bu.grad(), bu.lm());
                     }),
                     allow_raw_pointers())
@@ -2617,13 +2639,16 @@ EMSCRIPTEN_BINDINGS(Skia) {
                                          SkTileMode mode,
                                          uint32_t flags,
                                          WASMPointerF32 mPtr,
-                                         sk_sp<SkColorSpace> colorSpace) -> sk_sp<SkShader> {
+                                         sk_sp<SkColorSpace> colorSpace,
+                                         int interpolationColorSpaceIdx,
+                                         int hueMethodIdx) -> sk_sp<SkShader> {
                         if (!supported_for_gradients(colorType)) {
                             SkDebugf("%d is not an accepted colorType\n", colorType);
                             return nullptr;
                         }
                         GradientBuilder bu(cPtr, colorType, pPtr, count, mode,
-                                           flags, mPtr, std::move(colorSpace));
+                                           flags, mPtr, std::move(colorSpace),
+                                           interpolationColorSpaceIdx, hueMethodIdx);
 
                         return SkShaders::RadialGradient({cx, cy}, radius, bu.grad(), bu.lm());
                     }),
@@ -2641,13 +2666,16 @@ EMSCRIPTEN_BINDINGS(Skia) {
                                          float endAngle,
                                          uint32_t flags,
                                          WASMPointerF32 mPtr,
-                                         sk_sp<SkColorSpace> colorSpace) -> sk_sp<SkShader> {
+                                         sk_sp<SkColorSpace> colorSpace,
+                                         int interpolationColorSpaceIdx,
+                                         int hueMethodIdx) -> sk_sp<SkShader> {
                         if (!supported_for_gradients(colorType)) {
                             SkDebugf("%d is not an accepted colorType\n", colorType);
                             return nullptr;
                         }
                         GradientBuilder bu(cPtr, colorType, pPtr, count, mode,
-                                           flags, mPtr, std::move(colorSpace));
+                                           flags, mPtr, std::move(colorSpace),
+                                           interpolationColorSpaceIdx, hueMethodIdx);
                         return SkShaders::SweepGradient({cx, cy}, startAngle, endAngle,
                                                         bu.grad(), bu.lm());
                     }),
@@ -2677,7 +2705,9 @@ EMSCRIPTEN_BINDINGS(Skia) {
                                          SkTileMode mode,
                                          uint32_t flags,
                                          WASMPointerF32 mPtr,
-                                         sk_sp<SkColorSpace> colorSpace) -> sk_sp<SkShader> {
+                                         sk_sp<SkColorSpace> colorSpace,
+                                         int interpolationColorSpaceIdx,
+                                         int hueMethodIdx) -> sk_sp<SkShader> {
                         if (!supported_for_gradients(colorType)) {
                             SkDebugf("%d is not an accepted colorType\n", colorType);
                             return nullptr;
@@ -2685,7 +2715,8 @@ EMSCRIPTEN_BINDINGS(Skia) {
                         const SkPoint* startAndEnd =
                                 reinterpret_cast<const SkPoint*>(fourFloatsPtr);
                         GradientBuilder bu(cPtr, colorType, pPtr, count, mode,
-                                           flags, mPtr, std::move(colorSpace));
+                                           flags, mPtr, std::move(colorSpace),
+                                           interpolationColorSpaceIdx, hueMethodIdx);
                         return SkShaders::TwoPointConicalGradient(
                                 startAndEnd[0], startRadius,
                                 startAndEnd[1], endRadius,
@@ -3223,6 +3254,29 @@ EMSCRIPTEN_BINDINGS(Skia) {
             .value("Triangles", SkVertices::VertexMode::kTriangles_VertexMode)
             .value("TrianglesStrip", SkVertices::VertexMode::kTriangleStrip_VertexMode)
             .value("TriangleFan", SkVertices::VertexMode::kTriangleFan_VertexMode);
+
+    enum_<SkGradient::Interpolation::ColorSpace>("GradientInterpolationColorSpace")
+            .value("Destination",   SkGradient::Interpolation::ColorSpace::kDestination)
+            .value("SRGBLinear",    SkGradient::Interpolation::ColorSpace::kSRGBLinear)
+            .value("Lab",           SkGradient::Interpolation::ColorSpace::kLab)
+            .value("OKLab",         SkGradient::Interpolation::ColorSpace::kOKLab)
+            .value("OKLabGamutMap", SkGradient::Interpolation::ColorSpace::kOKLabGamutMap)
+            .value("LCH",           SkGradient::Interpolation::ColorSpace::kLCH)
+            .value("OKLCH",         SkGradient::Interpolation::ColorSpace::kOKLCH)
+            .value("OKLCHGamutMap", SkGradient::Interpolation::ColorSpace::kOKLCHGamutMap)
+            .value("SRGB",          SkGradient::Interpolation::ColorSpace::kSRGB)
+            .value("HSL",           SkGradient::Interpolation::ColorSpace::kHSL)
+            .value("HWB",           SkGradient::Interpolation::ColorSpace::kHWB)
+            .value("DisplayP3",     SkGradient::Interpolation::ColorSpace::kDisplayP3)
+            .value("Rec2020",       SkGradient::Interpolation::ColorSpace::kRec2020)
+            .value("ProphotoRGB",   SkGradient::Interpolation::ColorSpace::kProphotoRGB)
+            .value("A98RGB",        SkGradient::Interpolation::ColorSpace::kA98RGB);
+
+    enum_<SkGradient::Interpolation::HueMethod>("GradientInterpolationHueMethod")
+            .value("Shorter",    SkGradient::Interpolation::HueMethod::kShorter)
+            .value("Longer",     SkGradient::Interpolation::HueMethod::kLonger)
+            .value("Increasing", SkGradient::Interpolation::HueMethod::kIncreasing)
+            .value("Decreasing", SkGradient::Interpolation::HueMethod::kDecreasing);
 
     // A value object is much simpler than a class - it is returned as a JS
     // object and does not require delete().
