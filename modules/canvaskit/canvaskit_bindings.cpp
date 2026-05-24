@@ -1782,6 +1782,26 @@ EMSCRIPTEN_BINDINGS(Skia) {
                             }))
             .class_function("MakeSRGBToLinearGamma", &SkColorFilters::SRGBToLinearGamma)
             .class_function("MakeLuma", &SkLumaColorFilter::Make)
+            .class_function("_makeHSLAMatrix", optional_override([](WASMPointerF32 fPtr) {
+                                const float* twentyFloats = reinterpret_cast<const float*>(fPtr);
+                                return SkColorFilters::HSLAMatrix(twentyFloats);
+                            }))
+            .class_function("_MakeTable", optional_override([](WASMPointerU8 tPtr) {
+                                const uint8_t* table = reinterpret_cast<const uint8_t*>(tPtr);
+                                return SkColorFilters::Table(table);
+                            }))
+            .class_function("_MakeTableARGB",
+                            optional_override([](WASMPointerU8 aPtr,
+                                                 WASMPointerU8 rPtr,
+                                                 WASMPointerU8 gPtr,
+                                                 WASMPointerU8 bPtr) {
+                                const uint8_t* a = reinterpret_cast<const uint8_t*>(aPtr);
+                                const uint8_t* r = reinterpret_cast<const uint8_t*>(rPtr);
+                                const uint8_t* g = reinterpret_cast<const uint8_t*>(gPtr);
+                                const uint8_t* b = reinterpret_cast<const uint8_t*>(bPtr);
+                                return SkColorFilters::TableARGB(a, r, g, b);
+                            }))
+            .class_function("MakeLighting", &SkColorFilters::Lighting)
             .function("makeWithWorkingColorSpace",
                       optional_override([](SkColorFilter& self,
                                            sk_sp<SkColorSpace> workingCS) -> sk_sp<SkColorFilter> {
@@ -2233,7 +2253,36 @@ EMSCRIPTEN_BINDINGS(Skia) {
                             optional_override([](float dx, float dy, sk_sp<SkImageFilter> input)
                                                       -> sk_sp<SkImageFilter> {
                                 return SkImageFilters::Offset(dx, dy, input);
-                            }));
+                            }))
+            .class_function(
+                    "_MakeMagnifier",
+                    optional_override([](WASMPointerF32 lensBoundsPtr,
+                                         float zoomAmount,
+                                         float inset,
+                                         SkFilterMode fm,
+                                         SkMipmapMode mm,
+                                         sk_sp<SkImageFilter> input) -> sk_sp<SkImageFilter> {
+                        const SkRect* lensBounds =
+                                reinterpret_cast<const SkRect*>(lensBoundsPtr);
+                        return SkImageFilters::Magnifier(
+                                *lensBounds, zoomAmount, inset, SkSamplingOptions(fm, mm), input);
+                    }))
+            .class_function(
+                    "_MakeTile",
+                    optional_override([](WASMPointerF32 srcPtr,
+                                         WASMPointerF32 dstPtr,
+                                         sk_sp<SkImageFilter> input) -> sk_sp<SkImageFilter> {
+                        const SkRect* src = reinterpret_cast<const SkRect*>(srcPtr);
+                        const SkRect* dst = reinterpret_cast<const SkRect*>(dstPtr);
+                        return SkImageFilters::Tile(*src, *dst, input);
+                    }))
+            .class_function(
+                    "_MakePicture",
+                    optional_override([](sk_sp<SkPicture> pic,
+                                         WASMPointerF32 targetPtr) -> sk_sp<SkImageFilter> {
+                        const SkRect* target = reinterpret_cast<const SkRect*>(targetPtr);
+                        return SkImageFilters::Picture(pic, *target);
+                    }));
 
     class_<SkMaskFilter>("MaskFilter")
             .smart_ptr<sk_sp<SkMaskFilter>>("sk_sp<MaskFilter>")

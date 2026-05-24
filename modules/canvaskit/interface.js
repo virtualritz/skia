@@ -883,6 +883,55 @@ CanvasKit.onRuntimeInitialized = function() {
     return m;
   };
 
+  // colorMatrix is an HSLAMatrix (e.g. Float32Array of length 20) interpreted in
+  // hue/saturation/lightness/alpha space rather than RGBA. Useful for hue rotation
+  // primitives where doing the equivalent in RGBA requires a full color-conversion
+  // sandwich.
+  CanvasKit.ColorFilter.MakeHSLAMatrix = function(colorMatrix) {
+    if (!colorMatrix || colorMatrix.length !== 20) {
+      throw 'invalid color matrix';
+    }
+    var fptr = copy1dArray(colorMatrix, 'HEAPF32');
+    var m = CanvasKit.ColorFilter._makeHSLAMatrix(fptr);
+    freeArraysThatAreNotMallocedByUsers(fptr, colorMatrix);
+    return m;
+  };
+
+  // table is a 256-entry lookup table (Uint8Array or array of 256 bytes) applied
+  // identically to R, G, B, and A.
+  CanvasKit.ColorFilter.MakeTable = function(table) {
+    if (!table || table.length !== 256) {
+      throw 'invalid table (must be 256 bytes)';
+    }
+    var tPtr = copy1dArray(new Uint8Array(table), 'HEAPU8');
+    var m = CanvasKit.ColorFilter._MakeTable(tPtr);
+    CanvasKit._free(tPtr);
+    return m;
+  };
+
+  // Per-channel 256-entry lookup tables. Pass null for any channel to leave it
+  // unchanged (identity).
+  CanvasKit.ColorFilter.MakeTableARGB = function(tableA, tableR, tableG, tableB) {
+    function tableOrIdent(t) {
+      if (t && t.length === 256) {
+        return new Uint8Array(t);
+      }
+      var ident = new Uint8Array(256);
+      for (var i = 0; i < 256; i++) ident[i] = i;
+      return ident;
+    }
+    var ta = copy1dArray(tableOrIdent(tableA), 'HEAPU8');
+    var tr = copy1dArray(tableOrIdent(tableR), 'HEAPU8');
+    var tg = copy1dArray(tableOrIdent(tableG), 'HEAPU8');
+    var tb = copy1dArray(tableOrIdent(tableB), 'HEAPU8');
+    var m = CanvasKit.ColorFilter._MakeTableARGB(ta, tr, tg, tb);
+    CanvasKit._free(ta);
+    CanvasKit._free(tr);
+    CanvasKit._free(tg);
+    CanvasKit._free(tb);
+    return m;
+  };
+
   CanvasKit.ContourMeasure.prototype.getPosTan = function(distance, optionalOutput) {
     this._getPosTan(distance, _scratchFourFloatsAPtr);
     var ta = _scratchFourFloatsA['toTypedArray']();
@@ -913,6 +962,31 @@ CanvasKit.onRuntimeInitialized = function() {
   CanvasKit.ImageFilter.MakeDropShadowOnly = function(dx, dy, sx, sy, color, input) {
     var cPtr = copyColorToWasm(color, _scratchColorPtr);
     return CanvasKit.ImageFilter._MakeDropShadowOnly(dx, dy, sx, sy, cPtr, input);
+  };
+
+  // Fish-eye magnifier centred on `lensBounds` with the supplied zoom factor.
+  // `inset` controls the fish-eye distortion radius; `filter` + `mipmap` are
+  // the SkSamplingOptions for the magnified content.
+  CanvasKit.ImageFilter.MakeMagnifier = function(lensBounds, zoomAmount, inset,
+                                                 filter, mipmap, input) {
+    var bPtr = copyRectToWasm(lensBounds, _scratchFourFloatsAPtr);
+    filter = (filter !== undefined && filter !== null) ? filter : CanvasKit.FilterMode.Linear;
+    mipmap = (mipmap !== undefined && mipmap !== null) ? mipmap : CanvasKit.MipmapMode.None;
+    return CanvasKit.ImageFilter._MakeMagnifier(bPtr, zoomAmount, inset, filter, mipmap,
+                                                input || null);
+  };
+
+  // Tile `src` rect of input across `dst` rect.
+  CanvasKit.ImageFilter.MakeTile = function(src, dst, input) {
+    var srcPtr = copyRectToWasm(src, _scratchFourFloatsAPtr);
+    var dstPtr = copyRectToWasm(dst, _scratchFourFloatsBPtr);
+    return CanvasKit.ImageFilter._MakeTile(srcPtr, dstPtr, input || null);
+  };
+
+  // Wrap a Picture as an image filter source.
+  CanvasKit.ImageFilter.MakePicture = function(picture, targetRect) {
+    var rPtr = copyRectToWasm(targetRect, _scratchFourFloatsAPtr);
+    return CanvasKit.ImageFilter._MakePicture(picture, rPtr);
   };
 
   CanvasKit.ImageFilter.MakeImage = function(img, sampling, srcRect, dstRect) {
