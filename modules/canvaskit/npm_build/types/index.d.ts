@@ -3757,6 +3757,37 @@ export interface ColorFilterFactory {
      * and sets the red, green, and blue channels to zero.
      */
     MakeLuma(): ColorFilter;
+
+    /**
+     * Creates a color filter using the provided color matrix, but interpreted in HSLA
+     * space rather than RGBA. Useful for primitives like hue rotation where doing the
+     * equivalent in RGBA needs a sRGB->HSLA->matrix->HSLA->sRGB sandwich.
+     * @param cMatrix - 20 floats (4x5 row-major).
+     */
+    MakeHSLAMatrix(cMatrix: InputColorMatrix): ColorFilter;
+
+    /**
+     * Creates a color filter from a 256-entry lookup table that is applied identically
+     * to R, G, B, and A channels. The table must be exactly 256 bytes.
+     */
+    MakeTable(table: Uint8Array | number[]): ColorFilter;
+
+    /**
+     * Creates a color filter from four 256-entry lookup tables, one per channel.
+     * Pass `null` for any channel to leave it identity-mapped.
+     */
+    MakeTableARGB(
+        tableA: Uint8Array | number[] | null,
+        tableR: Uint8Array | number[] | null,
+        tableG: Uint8Array | number[] | null,
+        tableB: Uint8Array | number[] | null,
+    ): ColorFilter;
+
+    /**
+     * Creates a color filter that performs `out = src * mul + add`, channel-wise.
+     * Each color is a packed 32-bit ARGB value (`0xAARRGGBB`).
+     */
+    MakeLighting(mul: number, add: number): ColorFilter;
 }
 
 export interface ContourMeasureIterConstructor {
@@ -3952,6 +3983,27 @@ export interface ImageFilterFactory {
      * @param shader - The Shader to be transformed
      */
    MakeShader(shader: Shader): ImageFilter;
+
+    /**
+     * Fish-eye magnifier centred on `lensBounds`. `zoomAmount` is the magnification
+     * factor; `inset` controls the distortion radius around the magnified region.
+     * `filter` and `mipmap` are the SkSamplingOptions for resampling the magnified
+     * content. Defaults: `FilterMode.Linear` and `MipmapMode.None`.
+     */
+    MakeMagnifier(lensBounds: InputRect, zoomAmount: number, inset: number,
+                  filter?: FilterMode | null, mipmap?: MipmapMode | null,
+                  input?: ImageFilter | null): ImageFilter;
+
+    /**
+     * Tile the input's `src` rectangle across `dst`.
+     */
+    MakeTile(src: InputRect, dst: InputRect, input: ImageFilter | null): ImageFilter;
+
+    /**
+     * Wrap an SkPicture as an ImageFilter source. The picture is drawn into the
+     * filter at `targetRect`.
+     */
+    MakePicture(picture: SkPicture, targetRect: InputRect): ImageFilter;
 }
 
 /**

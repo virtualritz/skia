@@ -413,9 +413,20 @@ var CanvasKit = {
     MakeLinearToSRGBGamma: function() {},
     MakeMatrix: function() {},
     MakeSRGBToLinearGamma: function() {},
+    MakeLuma: function() {},
+    MakeHSLAMatrix: function() {},
+    MakeTable: function() {},
+    MakeTableARGB: function() {},
+    MakeLighting: function() {},
+    prototype: {
+      makeWithWorkingColorSpace: function() {},
+    },
     // private API (from C++ bindings)
     _MakeBlend: function() {},
     _makeMatrix: function() {},
+    _makeHSLAMatrix: function() {},
+    _MakeTable: function() {},
+    _MakeTableARGB: function() {},
   },
 
   ColorMatrix: {
@@ -542,6 +553,10 @@ var CanvasKit = {
     MakeImage: function() {},
     MakeMatrixTransform: function() {},
     MakeOffset: function() {},
+    MakeShader: function() {},
+    MakeMagnifier: function() {},
+    MakeTile: function() {},
+    MakePicture: function() {},
 
     prototype: {
       getOutputBounds: function() {},
@@ -555,6 +570,9 @@ var CanvasKit = {
     _MakeImageOptions: function() {},
     _MakeMatrixTransformCubic: function() {},
     _MakeMatrixTransformOptions: function() {},
+    _MakeMagnifier: function() {},
+    _MakeTile: function() {},
+    _MakePicture: function() {},
   },
 
   // These are defined in interface.js
