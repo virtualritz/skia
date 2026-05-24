@@ -1882,7 +1882,13 @@ export interface Canvas extends EmbindObject<"Canvas"> {
 /**
  * See SkColorFilter.h for more on this class. The objects are opaque.
  */
-export type ColorFilter = EmbindObject<"ColorFilter">;
+export interface ColorFilter extends EmbindObject<"ColorFilter"> {
+    /**
+     * See `Shader.makeWithWorkingColorSpace`. Pass `null` to operate in the
+     * destination surface's color space.
+     */
+    makeWithWorkingColorSpace(workingColorSpace: ColorSpace | null): ColorFilter;
+}
 
 export interface ContourMeasureIter extends EmbindObject<"ContourMeasureIter"> {
     /**
@@ -3063,9 +3069,21 @@ export interface RuntimeEffectBuilderConstructor {
 }
 
 /**
- * See SkShader.h for more on this class. The objects are opaque.
+ * See SkShader.h for more on this class.
  */
-export type Shader = EmbindObject<"Shader">;
+export interface Shader extends EmbindObject<"Shader"> {
+    /**
+     * Returns a shader that produces the same image as this one, but performs
+     * subsequent intermediate computations in the supplied `workingColorSpace`
+     * instead of the destination surface's color space. Useful for forcing
+     * linear-light gradient interpolation or filter math under a wide-gamut
+     * surface.
+     *
+     * Pass `null` to operate in the destination surface's color space (the
+     * default).
+     */
+    makeWithWorkingColorSpace(workingColorSpace: ColorSpace | null): Shader;
+}
 
 export interface Surface extends EmbindObject<"Surface"> {
     /**
