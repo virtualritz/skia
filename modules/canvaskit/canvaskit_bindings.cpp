@@ -2867,6 +2867,67 @@ EMSCRIPTEN_BINDINGS(Skia) {
                           return su;
                       }));
 
+    class_<SkRuntimeEffectBuilder>("RuntimeEffectBuilder")
+            .constructor<sk_sp<SkRuntimeEffect>>()
+            .function("_setUniform",
+                      optional_override([](SkRuntimeEffectBuilder& self,
+                                           std::string name,
+                                           WASMPointerF32 fPtr,
+                                           size_t fLen) -> bool {
+                          auto u = self.uniform(name.c_str());
+                          if (!u.fVar) return false;
+                          size_t expected = u.fVar->sizeInBytes() / sizeof(float);
+                          if (fLen != expected) {
+                              SkDebugf("setUniform(%s): %zu floats, expected %zu\n",
+                                       name.c_str(), fLen, expected);
+                              return false;
+                          }
+                          const float* src = reinterpret_cast<const float*>(fPtr);
+                          return u.set(src, fLen);
+                      }))
+            .function("setChildShader",
+                      optional_override([](SkRuntimeEffectBuilder& self,
+                                           std::string name,
+                                           sk_sp<SkShader> shader) -> bool {
+                          auto c = self.child(name.c_str());
+                          if (!c.fChild) return false;
+                          c = std::move(shader);
+                          return true;
+                      }))
+            .function("setChildColorFilter",
+                      optional_override([](SkRuntimeEffectBuilder& self,
+                                           std::string name,
+                                           sk_sp<SkColorFilter> cf) -> bool {
+                          auto c = self.child(name.c_str());
+                          if (!c.fChild) return false;
+                          c = std::move(cf);
+                          return true;
+                      }))
+            .function("setChildBlender",
+                      optional_override([](SkRuntimeEffectBuilder& self,
+                                           std::string name,
+                                           sk_sp<SkBlender> b) -> bool {
+                          auto c = self.child(name.c_str());
+                          if (!c.fChild) return false;
+                          c = std::move(b);
+                          return true;
+                      }))
+            .function("_makeShader",
+                      optional_override([](SkRuntimeEffectBuilder& self,
+                                           WASMPointerF32 mPtr) -> sk_sp<SkShader> {
+                          OptionalMatrix localMatrix(mPtr);
+                          return self.makeShader(mPtr ? &static_cast<const SkMatrix&>(localMatrix)
+                                                      : nullptr);
+                      }))
+            .function("makeColorFilter",
+                      optional_override([](SkRuntimeEffectBuilder& self) -> sk_sp<SkColorFilter> {
+                          return self.makeColorFilter();
+                      }))
+            .function("makeBlender",
+                      optional_override([](SkRuntimeEffectBuilder& self) -> sk_sp<SkBlender> {
+                          return self.makeBlender();
+                      }));
+
     value_object<RuntimeEffectUniform>("RuntimeEffectUniform")
             .field("columns", &RuntimeEffectUniform::columns)
             .field("rows", &RuntimeEffectUniform::rows)
